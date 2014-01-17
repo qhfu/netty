@@ -28,7 +28,6 @@
 
   <name>Netty/Transport/Native/Epoll</name>
   <packaging>nar</packaging>
-
   <build>
     <plugins>
       <plugin>
@@ -47,6 +46,12 @@
               <narSystemPackage>io.netty.jni.internal</narSystemPackage>
             </library>
           </libraries>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
         </configuration>
       </plugin>
     </plugins>

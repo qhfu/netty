@@ -85,6 +85,17 @@
         </test.jvm.argLine>
       </properties>
     </profile>
+    <profile>
+      <id>linux-native</id>
+      <activation>
+        <os>
+          <family>linux</family>
+        </os>
+      </activation>
+      <modules>
+        <module>transport-native-epoll</module>
+      </modules>
+    </profile>
   </profiles>
 
   <properties>
@@ -111,7 +122,6 @@
     <module>codec-http</module>
     <module>codec-socks</module>
     <module>transport</module>
-    <module>transport-native-epoll</module>
     <module>transport-rxtx</module>
     <module>transport-sctp</module>
     <module>transport-udt</module>

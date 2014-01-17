@@ -44,8 +44,8 @@ public final class Native {
     public static native void freeDirectBuffer(ByteBuffer buffer);
 
     // EventLoop operations and constants
-    public static final int EPOLLIN = 0b0000_0001;
-    public static final int EPOLLOUT = 0b0000_0010;
+    public static final int EPOLLIN = 0x01;
+    public static final int EPOLLOUT = 0x02;
 
     public static native int eventFd();
     public static native void eventFdWrite(int fd, long value);

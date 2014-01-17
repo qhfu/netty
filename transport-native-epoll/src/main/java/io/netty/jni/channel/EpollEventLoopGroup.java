@@ -46,7 +46,7 @@ public final class EpollEventLoopGroup extends MultithreadEventLoopGroup {
     protected EventExecutor newChild(ThreadFactory threadFactory, Object... args) throws Exception {
         int maxEvents;
         if (args.length == 1) {
-            maxEvents = (int) args[0];
+            maxEvents = (Integer) args[0];
         } else {
             maxEvents = 128;
         }
