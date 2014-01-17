@@ -805,3 +805,4 @@ JNIEXPORT jint JNICALL Java_io_netty_jni_internal_Native_getSoLinger(JNIEnv *env
         return optval.l_linger;
     }
 }
+

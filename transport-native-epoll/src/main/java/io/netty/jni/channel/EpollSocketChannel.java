@@ -97,21 +97,9 @@ public final class EpollSocketChannel extends AbstractEpollChannel implements So
 
     private void clearEpollOut() {
         if ((flags & Native.EPOLLOUT) != 0) {
-            flags = Native.EPOLLOUT;
+            flags = ~Native.EPOLLOUT;
             ((EpollEventLoop) eventLoop()).modify(this);
         }
-    }
-
-    /**
-     * Read bytes into the given {@link ByteBuf} and return the amount.
-     */
-    private int doReadBytes(ByteBuf byteBuf) throws Exception {
-        ByteBuffer buf = byteBuf.internalNioBuffer(0, byteBuf.writableBytes());
-        int localReadAmount = Native.read(fd, buf, buf.position(), buf.limit());
-        if (localReadAmount > 0) {
-            byteBuf.writerIndex(byteBuf.writerIndex() + localReadAmount);
-        }
-        return localReadAmount;
     }
 
     /**
@@ -476,6 +464,18 @@ public final class EpollSocketChannel extends AbstractEpollChannel implements So
         private void doFinishConnect() throws Exception {
             Native.finishConnect(fd);
             clearEpollOut();
+        }
+
+        /**
+         * Read bytes into the given {@link ByteBuf} and return the amount.
+         */
+        private int doReadBytes(ByteBuf byteBuf) throws Exception {
+            ByteBuffer buf = byteBuf.internalNioBuffer(0, byteBuf.writableBytes());
+            int localReadAmount = Native.read(fd, buf, buf.position(), buf.limit());
+            if (localReadAmount > 0) {
+                byteBuf.writerIndex(byteBuf.writerIndex() + localReadAmount);
+            }
+            return localReadAmount;
         }
 
         @Override

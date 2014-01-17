@@ -92,8 +92,9 @@ abstract class AbstractEpollChannel extends AbstractChannel {
         return fd != -1;
     }
 
+    @Override
     protected void doDeregister() throws Exception {
-        ((EpollEventLoop) eventLoop()).deregister(this);
+        ((EpollEventLoop) eventLoop()).remove(this);
     }
 
     @Override
@@ -111,14 +112,10 @@ abstract class AbstractEpollChannel extends AbstractChannel {
         }
     }
 
-    private boolean isFlushPending() {
-        return (flags & Native.EPOLLOUT) != 0;
-    }
-
     @Override
     protected void doRegister() throws Exception {
         EpollEventLoop loop = (EpollEventLoop) eventLoop();
-        loop.register(this);
+        loop.add(this);
     }
 
     @Override
@@ -148,6 +145,10 @@ abstract class AbstractEpollChannel extends AbstractChannel {
         void epollOutReady() {
             // directly call super.flush0() to force a flush now
             super.flush0();
+        }
+
+        private boolean isFlushPending() {
+            return (flags & Native.EPOLLOUT) != 0;
         }
     }
 }

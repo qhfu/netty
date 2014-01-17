@@ -114,7 +114,7 @@ final class EpollEventLoop extends SingleThreadEventLoop {
     /**
      * Register the given channel with this {@link io.netty.channel.EventLoop}.
      */
-    void register(AbstractEpollChannel ch) {
+    void add(AbstractEpollChannel ch) {
         assert inEventLoop();
         int id = nextId();
         Native.epollCtlAdd(epfd, ch.fd, ch.flags, id);
@@ -133,7 +133,7 @@ final class EpollEventLoop extends SingleThreadEventLoop {
     /**
      * Deregister the given channel from this {@link io.netty.channel.EventLoop}.
      */
-    void deregister(AbstractEpollChannel ch) {
+    void remove(AbstractEpollChannel ch) {
         assert inEventLoop();
         if (ids.remove(ch.id) != null && ch.isOpen()) {
             // Remove the channel. This is only needed if it's still open as otherwise it will be automatically
@@ -148,7 +148,7 @@ final class EpollEventLoop extends SingleThreadEventLoop {
         return new ConcurrentLinkedQueue<Runnable>();
     }
 
-    private int epollWait() throws IOException {
+    private int epollWait() {
         int selectCnt = 0;
         long currentTimeNanos = System.nanoTime();
         long selectDeadLineNanos = currentTimeNanos + delayNanos(currentTimeNanos);
