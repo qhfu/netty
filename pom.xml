@@ -474,6 +474,11 @@
               <goal>manifest</goal>
             </goals>
             <configuration>
+              <supportedProjectTypes>
+                <supportedProjectType>jar</supportedProjectType>
+                <supportedProjectType>nar</supportedProjectType>
+                <supportedProjectType>bundle</supportedProjectType>
+              </supportedProjectTypes>
               <instructions>
                 <Export-Package>${project.groupId}.*</Export-Package>
                 <!-- enforce JVM vendor package as optional -->
