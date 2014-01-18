@@ -130,7 +130,7 @@ jobject createInetSocketAddress(JNIEnv * env, struct sockaddr_storage addr) {
 }
 
 void init_sockaddr(JNIEnv * env, jbyteArray address, jint scopeId, jint jport, struct sockaddr_storage * addr) {
-    uint16_t port = htons(jport);
+    uint16_t port = htons((uint16_t) jport);
     jbyte* addressBytes = (*env)->GetByteArrayElements(env, address, 0);
     if (socketType == AF_INET6) {
         struct sockaddr_in6* ip6addr = (struct sockaddr_in6 *) addr;
@@ -138,7 +138,7 @@ void init_sockaddr(JNIEnv * env, jbyteArray address, jint scopeId, jint jport, s
         ip6addr->sin6_port = port;
 
         if (scopeId != 0) {
-           ip6addr->sin6_scope_id = scopeId;
+           ip6addr->sin6_scope_id = (uint32_t) scopeId;
         }
         memcpy( &(ip6addr->sin6_addr.s6_addr), addressBytes, 16);
     } else {
@@ -337,7 +337,7 @@ JNIEXPORT void JNICALL Java_io_netty_jni_internal_Native_freeDirectBuffer(JNIEnv
 }
 
 JNIEXPORT jobject JNICALL Java_io_netty_jni_internal_Native_allocateDirectBuffer(JNIEnv *env, jclass clazz, jint size) {
-  void *mem = malloc(size);
+  void *mem = malloc((size_t) size);
 
   if (mem == NULL) {
      throwOutOfMemoryError(env, "Error allocating native buffer");
@@ -358,7 +358,7 @@ JNIEXPORT jint JNICALL Java_io_netty_jni_internal_Native_eventFd(JNIEnv * env, j
 }
 
 JNIEXPORT void JNICALL Java_io_netty_jni_internal_Native_eventFdWrite(JNIEnv * env, jclass clazz, jint fd, jlong value) {
-    jint eventFD = eventfd_write(fd, value);
+    jint eventFD = eventfd_write(fd, (eventfd_t)value);
 
     if (eventFD < 0) {
         int err = errno;
@@ -414,7 +414,7 @@ JNIEXPORT jint JNICALL Java_io_netty_jni_internal_Native_epollWait(JNIEnv * env,
     int i;
     for (i = 0; i < ready; i++) {
         // store the ready ops and id
-        elements[i] = ev[i].data.u64;
+        elements[i] = (jlong) ev[i].data.u64;
         if (ev[i].events & (EPOLLIN)) {
             elements[i] |= EPOLL_READ;
         }
@@ -485,7 +485,7 @@ JNIEXPORT jint JNICALL Java_io_netty_jni_internal_Native_write(JNIEnv * env, jcl
         throwIOException(env, exceptionMessage("Error while write(...): ", err));
         return -1;
     }
-    return res;
+    return (jint) res;
 }
 
 JNIEXPORT jlong JNICALL Java_io_netty_jni_internal_Native_writev(JNIEnv * env, jclass clazz, jint fd, jobjectArray buffers, jint offset, jint length) {
@@ -512,7 +512,7 @@ JNIEXPORT jlong JNICALL Java_io_netty_jni_internal_Native_writev(JNIEnv * env, j
         }
         void *buffer = (*env)->GetDirectBufferAddress(env, bufObj);
         iov[iovidx].iov_base = buffer + pos;
-        iov[iovidx].iov_len = limit - pos;
+        iov[iovidx].iov_len = (size_t) limit - pos;
         iovidx++;
     }
 
@@ -570,7 +570,7 @@ JNIEXPORT jint JNICALL Java_io_netty_jni_internal_Native_read(JNIEnv * env, jcla
         // end-of-stream
         return -1;
     }
-    return res;
+    return (jint) res;
 }
 
 JNIEXPORT void JNICALL Java_io_netty_jni_internal_Native_close(JNIEnv * env, jclass clazz, jint fd) {
@@ -701,7 +701,7 @@ JNIEXPORT jlong JNICALL Java_io_netty_jni_internal_Native_sendfile(JNIEnv *env, 
     off_t offset = off;
     int err;
     do {
-      res = sendfile(fd, srcFd, &offset, len);
+      res = sendfile(fd, srcFd, &offset, (size_t) len);
     } while (res == -1 && ((err = errno) == EINTR));
     if (res < 0) {
         if (err == EAGAIN) {
