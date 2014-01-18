@@ -469,7 +469,7 @@ JNIEXPORT jint JNICALL Java_io_netty_jni_internal_Native_write(JNIEnv * env, jcl
     ssize_t res;
     int err;
     do {
-       res = write(fd, buffer + pos, limit - pos);
+       res = write(fd, buffer + pos, (size_t) (limit - pos));
        // keep on writing if it was interrupted
     } while(res == -1 && ((err = errno) == EINTR));
 
@@ -512,7 +512,7 @@ JNIEXPORT jlong JNICALL Java_io_netty_jni_internal_Native_writev(JNIEnv * env, j
         }
         void *buffer = (*env)->GetDirectBufferAddress(env, bufObj);
         iov[iovidx].iov_base = buffer + pos;
-        iov[iovidx].iov_len = (size_t) limit - pos;
+        iov[iovidx].iov_len = (size_t) (limit - pos);
         iovidx++;
     }
 
@@ -549,7 +549,7 @@ JNIEXPORT jint JNICALL Java_io_netty_jni_internal_Native_read(JNIEnv * env, jcla
     ssize_t res;
     int err;
     do {
-        res = read(fd, buffer + pos, limit - pos);
+        res = read(fd, buffer + pos, (size_t) (limit - pos));
         // Keep on reading if we was interrupted
     } while (res == -1 && ((err = errno) == EINTR));
 
