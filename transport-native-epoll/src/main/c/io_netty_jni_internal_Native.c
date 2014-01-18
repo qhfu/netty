@@ -46,7 +46,7 @@ jclass runtimeExceptionClass = NULL;
 jclass ioExceptionClass = NULL;
 jclass closedChannelExceptionClass = NULL;
 jclass inetSocketAddressClass = NULL;
-
+static int socketType;
 
 // util methods
 void throwRuntimeException(JNIEnv *env, char *message) {
@@ -130,17 +130,39 @@ jobject createInetSocketAddress(JNIEnv * env, struct sockaddr_storage addr) {
 }
 
 void init_sockaddr(JNIEnv * env, jbyteArray address, jint scopeId, jint jport, struct sockaddr_storage * addr) {
-    struct sockaddr_in6* ip6addr = (struct sockaddr_in6 *) addr;
-    ip6addr->sin6_family = AF_INET6;
-    ip6addr->sin6_port = htons(jport);
-
-    if (scopeId != 0) {
-        ip6addr->sin6_scope_id = scopeId;
-    }
+    uint16_t port = htons(jport);
     jbyte* addressBytes = (*env)->GetByteArrayElements(env, address, 0);
-    memcpy( &(ip6addr->sin6_addr.s6_addr), addressBytes, 16);
+    if (socketType == AF_INET6) {
+        struct sockaddr_in6* ip6addr = (struct sockaddr_in6 *) addr;
+        ip6addr->sin6_family = AF_INET6;
+        ip6addr->sin6_port = port;
+
+        if (scopeId != 0) {
+           ip6addr->sin6_scope_id = scopeId;
+        }
+        memcpy( &(ip6addr->sin6_addr.s6_addr), addressBytes, 16);
+    } else {
+        struct sockaddr_in* ipaddr = (struct sockaddr_in *) addr;
+        ipaddr->sin_family = AF_INET;
+        ipaddr->sin_port = port;
+        memcpy( &(ipaddr->sin_addr.s_addr), addressBytes + 12, 4);
+    }
+
     (*env)->ReleaseByteArrayElements(env, address, addressBytes, JNI_ABORT);
 
+}
+
+static int socket_type() {
+    int fd = socket(AF_INET6, SOCK_STREAM | SOCK_NONBLOCK, 0);
+    if (fd == -1) {
+        if (errno == EAFNOSUPPORT) {
+            return AF_INET;
+        }
+        return AF_INET6;
+    } else {
+        close(fd);
+        return AF_INET6;
+    }
 }
 // util methods end
 
@@ -282,6 +304,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
             throwRuntimeException(env, "Unable to obtain constructor of InetSocketAddress");
             return JNI_ERR;
         }
+        socketType = socket_type();
         return JNI_VERSION_1_6;
     }
 }
@@ -572,13 +595,12 @@ JNIEXPORT void JNICALL Java_io_netty_jni_internal_Native_shutdown(JNIEnv * env, 
 
 JNIEXPORT jint JNICALL Java_io_netty_jni_internal_Native_socket(JNIEnv * env, jclass clazz) {
     // TODO: Maybe also respect -Djava.net.preferIPv4Stack=true
-    int fd = socket(AF_INET6, SOCK_STREAM | SOCK_NONBLOCK, 0);
-
+    int fd = socket(socketType, SOCK_STREAM | SOCK_NONBLOCK, 0);
     if (fd == -1) {
         int err = errno;
         throwIOException(env, exceptionMessage("Error creating socket: ", err));
         return -1;
-    } else {
+    } else if (socketType == AF_INET6){
         // Allow to listen /connect ipv4 and ipv6
         int optval = 0;
         if (setOption(env, fd, IPPROTO_IPV6, IPV6_V6ONLY, &optval, sizeof(optval)) < 0) {
