@@ -39,7 +39,14 @@
           <java>
             <include>true</include>
           </java>
-          <c/>
+          <c>
+           <clearDefaultOptions>true</clearDefaultOptions>
+           <options>
+             <option>-Wall</option>
+             <option>-Wno-long-long</option>
+             <option>-Wconversion</option>
+           </options>
+          </c>
           <libraries>
             <library>
               <type>jni</type>
