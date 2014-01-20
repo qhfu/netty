@@ -32,6 +32,9 @@
 #define EPOLL_READ 0x01
 #define EPOLL_WRITE 0x02
 
+// optional
+extern int accept4(int sockFd, struct sockaddr *addr, socklen_t *addrlen, int flags) __attribute__((weak));
+
 // Those are initialized in the init(...) method and cached for performance reasons
 jmethodID posId = NULL;
 jmethodID limitId = NULL;
@@ -666,7 +669,11 @@ JNIEXPORT jint JNICALL Java_io_netty_jni_internal_Native_accept(JNIEnv * env, jc
     int err;
 
     do {
-      socketFd = accept4(fd, NULL, 0, SOCK_NONBLOCK | SOCK_CLOEXEC);
+        if (accept4) {
+            socketFd = accept4(fd, NULL, 0, SOCK_NONBLOCK | SOCK_CLOEXEC);
+        } else  {
+            socketFd = accept(fd, NULL, 0);
+        }
     } while (socketFd == -1 && ((err = errno) == EINTR));
 
     if (socketFd == -1) {
@@ -674,6 +681,19 @@ JNIEXPORT jint JNICALL Java_io_netty_jni_internal_Native_accept(JNIEnv * env, jc
             // Everything consumed so just return -1 here.
             return -1;
         } else {
+            throwIOException(env, exceptionMessage("Error during accept(...): ", err));
+            return -1;
+        }
+    }
+    if (accept4)  {
+        return socketFd;
+    } else  {
+        // accept4 was not present so need two more sys-calls ...
+        if (fcntl(socketFd, F_SETFD, FD_CLOEXEC) == -1) {
+            throwIOException(env, exceptionMessage("Error during accept(...): ", err));
+            return -1;
+        }
+        if (fcntl(socketFd, F_SETFL, O_NONBLOCK) == -1) {
             throwIOException(env, exceptionMessage("Error during accept(...): ", err));
             return -1;
         }
