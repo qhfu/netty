@@ -514,6 +514,10 @@ JNIEXPORT jlong JNICALL Java_io_netty_jni_internal_Native_writev(JNIEnv * env, j
             limit = (*env)->GetIntField(env, bufObj, limitFieldId);
         }
         void *buffer = (*env)->GetDirectBufferAddress(env, bufObj);
+        if (buffer == NULL) {
+            throwRuntimeException(env, "Unable to access address of buffer");
+            return -1;
+        }
         iov[iovidx].iov_base = buffer + pos;
         iov[iovidx].iov_len = (size_t) (limit - pos);
         iovidx++;
