@@ -49,6 +49,11 @@
           </c>
           <libraries>
             <library>
+              <!-- 
+                ~ Be aware that you still need to have g++ installed because  
+                ~ of a bug in the latest nar-maven-plugin 
+              -->
+              <linkCPP>false</linkCPP>
               <type>jni</type>
               <narSystemPackage>io.netty.jni.internal</narSystemPackage>
             </library>
